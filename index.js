@@ -1,5 +1,5 @@
 const fs = require('fs');
-const axios = require('axios');
+const http = require('http');
 const table = require('text-table');
 const Elm = require('./elm.js');
 
@@ -13,8 +13,8 @@ catch (e) {
   process.exit(1);
 }
 
-axios.get("http://package.elm-lang.org/all-packages")
-  .then(res => {
+fetch("http://package.elm-lang.org/all-packages")
+  .then(data => {
     let parsedJson;
 
     try {
@@ -27,7 +27,7 @@ axios.get("http://package.elm-lang.org/all-packages")
 
     const app = Elm.Main.worker({
       elmPackageJson: parsedJson,
-      registry: res.data,
+      registry: data,
     });
 
     app.ports.sendError.subscribe(error => {
@@ -59,5 +59,25 @@ axios.get("http://package.elm-lang.org/all-packages")
   })
   .catch(err => console.error(err));
 
+function fetch(url) {
+  return new Promise((resolve, reject) => {
+    http.get(url, res => {
+      res.setEncoding('utf8');
+      let body = '';
+      res.on('data', data => {
+        body += data;
+      });
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body));
+        }
+        catch (e) {
+          reject(e);
+        }
+      });
+      res.on('error', reject);
+    });
+  });
+}
 
 

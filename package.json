@@ -1,6 +1,6 @@
 {
   "name": "elm-outdated",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Keep your Elm dependencies up-to-date",
   "main": "index.js",
   "bin": {
@@ -18,7 +18,6 @@
   "author": "Fedor Nezhivoi",
   "license": "BSD-3-Clause",
   "dependencies": {
-    "axios": "^0.16.2",
     "text-table": "^0.2.0"
   },
   "devDependencies": {
