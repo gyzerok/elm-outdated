@@ -1,0 +1,25 @@
+{
+  "name": "elm-outdated",
+  "version": "0.1.0",
+  "description": "Keep your Elm dependencies up-to-date",
+  "main": "index.js",
+  "bin": {
+    "elm-outdated": "index.js"
+  },
+  "scripts": {
+    "build": "npx elm-make Main.elm --output=elm.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "elm",
+    "elm-package",
+    "outdated"
+  ],
+  "author": "Fedor Nezhivoi",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "elm": "^0.18.0",
+    "text-table": "^0.2.0"
+  }
+}
