@@ -1,10 +1,10 @@
 {
   "name": "elm-outdated",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keep your Elm dependencies up-to-date",
   "main": "index.js",
   "bin": {
-    "elm-outdated": "index.js"
+    "elm-outdated": "bin/elm-outdated"
   },
   "scripts": {
     "build": "npx elm-make Main.elm --output=elm.js",
@@ -19,7 +19,9 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.16.2",
-    "elm": "^0.18.0",
     "text-table": "^0.2.0"
+  },
+  "devDependencies": {
+    "elm": "^0.18.0"
   }
 }

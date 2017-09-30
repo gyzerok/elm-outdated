@@ -1,4 +1,3 @@
-// global.XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 const fs = require('fs');
 const axios = require('axios');
 const table = require('text-table');
