@@ -1,6 +1,6 @@
 {
   "name": "elm-outdated",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Keep your Elm dependencies up-to-date",
   "main": "index.js",
   "bin": {

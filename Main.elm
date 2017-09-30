@@ -38,62 +38,79 @@ type alias Report =
 
 init : Decode.Value -> ( Model, Cmd msg )
 init flags =
+    case decodeFlags flags of
+        Err e ->
+            ( (), sendError e )
+
+        Ok ( deps, registry ) ->
+            let
+                reports =
+                    deps
+                        |> List.foldl
+                            (\dep ->
+                                let
+                                    maybeVersions =
+                                        Dict.get dep.name registry
+
+                                    report =
+                                        Maybe.map3 Report
+                                            (Just dep.version |> Maybe.map versionToString)
+                                            (maybeVersions |> Maybe.andThen (wantedVersion dep.version) |> Maybe.map versionToString)
+                                            (maybeVersions |> Maybe.andThen List.head |> Maybe.map versionToString)
+                                in
+                                    Dict.insert dep.name report
+                            )
+                            Dict.empty
+            in
+                ( (), sendReports <| Dict.toList reports )
+
+
+decodeFlags : Decode.Value -> Result String ( List Package, Registry )
+decodeFlags flags =
     let
+        rangeDecoder =
+            Decode.string
+                |> Decode.andThen
+                    (\str ->
+                        case List.head <| String.split " " str of
+                            Nothing ->
+                                Decode.fail "Incorrent dependency range format"
+
+                            Just versionStr ->
+                                case versionFromString versionStr of
+                                    Nothing ->
+                                        Decode.fail "Incorrect version format"
+
+                                    Just version ->
+                                        Decode.succeed version
+                    )
+
+        depsDecoder =
+            Decode.keyValuePairs rangeDecoder
+                |> Decode.at [ "dependencies" ]
+                |> Decode.map (List.map (uncurry Package))
+
         decoder =
             Decode.map2 (,)
-                (Decode.field "elmPackageJson"
-                    (Decode.at [ "dependencies" ] <|
-                        Decode.keyValuePairs Decode.string
-                    )
-                )
+                (Decode.field "elmPackageJson" depsDecoder)
                 (Decode.field "registry" registryDecoder)
-
-        { registry, deps } =
-            case Decode.decodeValue decoder flags of
-                Err _ ->
-                    Debug.crash "Corrupted elm-package.json"
-
-                Ok ( deps, registry ) ->
-                    { registry = registry
-                    , deps =
-                        deps
-                            |> List.map
-                                (\( name, versionRange ) ->
-                                    { name = name
-                                    , version =
-                                        String.split " " versionRange
-                                            |> List.head
-                                            |> unsafe
-                                            |> versionFromString
-                                            |> Result.toMaybe
-                                            |> unsafe
-                                    }
-                                )
-                    }
-
-        reports =
-            deps
-                |> List.foldl
-                    (\dep ->
-                        Dict.insert dep.name <|
-                            Maybe.map3 Report
-                                (Just dep.version |> Maybe.map versionToString)
-                                (wantedVersion registry dep |> Maybe.map versionToString)
-                                (latestVersion registry dep |> Maybe.map versionToString)
-                    )
-                    Dict.empty
     in
-        ( (), sendReports <| Dict.toList reports )
+        case Decode.decodeValue decoder flags of
+            Err _ ->
+                Err "Your elm-package.json is corrupted."
+
+            Ok decoded ->
+                Ok decoded
 
 
-versionFromString : String -> Result String Version
+versionFromString : String -> Maybe Version
 versionFromString str =
     case String.split "." str of
         major :: minor :: patch :: [] ->
-            Ok <| Version major minor patch
+            Just <| Version major minor patch
 
         _ ->
-            Err "TODO"
+            Nothing
 
 
 versionToString : Version -> String
@@ -101,19 +118,21 @@ versionToString { major, minor, patch } =
     major ++ "." ++ minor ++ "." ++ patch
 
 
+versionDecoder : Decode.Decoder Version
 versionDecoder =
     Decode.string
         |> Decode.andThen
             (\str ->
                 case versionFromString str of
-                    Err e ->
-                        Decode.fail e
+                    Nothing ->
+                        Decode.fail "Failed to decode version"
 
-                    Ok version ->
+                    Just version ->
                         Decode.succeed version
             )
 
 
+registryDecoder : Decode.Decoder Registry
 registryDecoder =
     Decode.map Dict.fromList <|
         Decode.list <|
@@ -122,42 +141,19 @@ registryDecoder =
                 (Decode.field "versions" <| Decode.list versionDecoder)
 
 
-wantedVersion : Registry -> Package -> Maybe Version
-wantedVersion registry package =
+wantedVersion : Version -> List Version -> Maybe Version
+wantedVersion version versions =
     let
         safeVersions =
-            registry
-                |> Dict.get package.name
-                |> unsafe
-                |> List.filter (\{ major } -> major == package.version.major)
+            versions
+                |> List.filter (\{ major } -> major == version.major)
     in
         case safeVersions of
             [] ->
-                Debug.crash "TODO"
+                Nothing
 
             versions ->
                 List.head versions
-
-
-latestVersion : Registry -> Package -> Maybe Version
-latestVersion registry package =
-    Dict.get package.name registry
-        |> unsafe
-        |> List.head
-
-
-
----- HELPERS ----
-
-
-unsafe : Maybe a -> a
-unsafe maybe =
-    case maybe of
-        Nothing ->
-            Debug.crash "whatever"
-
-        Just x ->
-            x
 
 
 
@@ -174,3 +170,6 @@ main =
 
 
 port sendReports : List ( String, Maybe Report ) -> Cmd msg
+
+
+port sendError : String -> Cmd msg
