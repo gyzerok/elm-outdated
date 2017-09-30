@@ -36,19 +36,25 @@ axios.get("http://package.elm-lang.org/all-packages")
     });
 
     app.ports.sendReports.subscribe(reports => {
-      console.log(
-        table(
-          [
-            ['package', 'current', 'wanted', 'latest'],
-            ...reports.map(([name, report]) =>
-              !report
-                ? [name, 'custom', 'custom', 'custom']
-                : [name, report.current, report.wanted, report.latest]
-            )
-          ],
-          { align: ['l', 'r', 'r', 'r'] }
-        )
-      )
+      if (reports.length === 0) {
+        console.log('Everything is up to date!');
+      }
+      else {
+        console.log(
+          table(
+            [
+              ['package', 'current', 'wanted', 'latest'],
+              ...reports
+                .map(([name, report]) =>
+                !report
+                  ? [name, 'custom', 'custom', 'custom']
+                  : [name, report.current, report.wanted, report.latest]
+              )
+            ],
+            { align: ['l', 'r', 'r', 'r'] }
+          )
+        );
+      }
     });
   })
   .catch(err => console.error(err));

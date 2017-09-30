@@ -61,6 +61,15 @@ init flags =
                                     Dict.insert dep.name report
                             )
                             Dict.empty
+                        |> Dict.filter
+                            (\name maybeReport ->
+                                case maybeReport of
+                                    Nothing ->
+                                        True
+
+                                    Just report ->
+                                        report.current /= report.wanted
+                            )
             in
                 ( (), sendReports <| Dict.toList reports )
 
