@@ -68,7 +68,7 @@ init flags =
                                         True
 
                                     Just report ->
-                                        report.current /= report.wanted
+                                        report.current /= report.latest
                             )
             in
                 ( (), sendReports <| Dict.toList reports )
