@@ -11,3 +11,7 @@ npm i -g elm-outdated
 ### Usage
 
 Just run `elm-outdated` in your project directory where `elm-package.json` is located.
+
+### Example
+
+![Example output](example-output.png)
