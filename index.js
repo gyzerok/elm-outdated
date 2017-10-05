@@ -1,7 +1,11 @@
 const fs = require('fs');
 const http = require('http');
 const table = require('text-table');
+const semver = require('semver');
+const clc = require('cli-color');
+
 const Elm = require('./elm.js');
+
 
 let elmPackageJson;
 
@@ -43,15 +47,22 @@ fetch("http://package.elm-lang.org/all-packages")
         console.log(
           table(
             [
-              ['package', 'current', 'wanted', 'latest'],
+              [clc.underline('Package'), clc.underline('Current'), clc.underline('Wanted'), clc.underline('Latest')],
               ...reports
-                .map(([name, report]) =>
-                !report
-                  ? [name, 'custom', 'custom', 'custom']
-                  : [name, report.current, report.wanted, report.latest]
-              )
+                .map(([name, report]) => {
+                  const coloredName = semver.lt(report.current, report.wanted) 
+                    ? clc.red(name)
+                    : name;
+
+                  return !report
+                    ? [name, 'custom', 'custom', 'custom']
+                    : [coloredName, report.current, clc.green(report.wanted), clc.magenta(report.latest)]
+                })
             ],
-            { align: ['l', 'r', 'r', 'r'] }
+            {
+              align: ['l', 'r', 'r', 'r'],
+              stringLength: clc.getStrippedLength
+            }
           )
         );
       }

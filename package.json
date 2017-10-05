@@ -18,6 +18,8 @@
   "author": "Fedor Nezhivoi",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "cli-color": "^1.2.0",
+    "semver": "^5.4.1",
     "text-table": "^0.2.0"
   },
   "devDependencies": {
