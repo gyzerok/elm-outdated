@@ -2,6 +2,10 @@
   "name": "elm-outdated",
   "version": "1.0.4",
   "description": "Keep your Elm dependencies up-to-date",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:gyzerok/elm-outdated.git"
+  },
   "main": "index.js",
   "bin": {
     "elm-outdated": "bin/elm-outdated"
