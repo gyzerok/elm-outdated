@@ -47,12 +47,15 @@ fetch("http://package.elm-lang.org/all-packages")
         console.log(
           table(
             [
-              [clc.underline('Package'), clc.underline('Current'), clc.underline('Wanted'), clc.underline('Latest')],
+              ['Package', 'Current', 'Wanted', 'Latest'].map(h => clc.underline(h)),
               ...reports
                 .map(([name, report]) => {
-                  const coloredName = semver.lt(report.current, report.wanted) 
-                    ? clc.red(name)
-                    : name;
+                  let coloredName = name;
+                  if (semver.lt(report.wanted, report.latest)) {
+                    coloredName = clc.red(name);
+                  } else if (semver.lt(report.current, report.wanted)) {
+                    coloredName = clc.green(name);
+                  }
 
                   return !report
                     ? [name, 'custom', 'custom', 'custom']
@@ -90,5 +93,3 @@ function fetch(url) {
     });
   });
 }
-
-
