@@ -2,6 +2,7 @@
   "name": "elm-outdated",
   "version": "1.0.4",
   "description": "Keep your Elm dependencies up-to-date",
+  "repository": "gyzerok/elm-outdated",
   "main": "index.js",
   "bin": {
     "elm-outdated": "bin/elm-outdated"
