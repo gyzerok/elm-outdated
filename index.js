@@ -1,7 +1,6 @@
 const fs = require('fs');
 const http = require('http');
 const table = require('text-table');
-const semver = require('semver');
 const clc = require('cli-color');
 
 const Elm = require('./elm.js');
@@ -50,16 +49,9 @@ fetch("http://package.elm-lang.org/all-packages")
               ['Package', 'Current', 'Wanted', 'Latest'].map(h => clc.underline(h)),
               ...reports
                 .map(([name, report]) => {
-                  let coloredName = name;
-                  if (semver.lt(report.wanted, report.latest)) {
-                    coloredName = clc.red(name);
-                  } else if (semver.lt(report.current, report.wanted)) {
-                    coloredName = clc.green(name);
-                  }
-
                   return !report
                     ? [name, 'custom', 'custom', 'custom']
-                    : [coloredName, report.current, clc.green(report.wanted), clc.magenta(report.latest)]
+                    : [name, report.current, clc.green(report.wanted), clc.magenta(report.latest)]
                 })
             ],
             {
