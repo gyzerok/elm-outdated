@@ -1,7 +1,10 @@
 const fs = require('fs');
 const http = require('http');
 const table = require('text-table');
+const clc = require('cli-color');
+
 const Elm = require('./elm.js');
+
 
 let elmPackageJson;
 
@@ -43,15 +46,18 @@ fetch("http://package.elm-lang.org/all-packages")
         console.log(
           table(
             [
-              ['package', 'current', 'wanted', 'latest'],
+              ['Package', 'Current', 'Wanted', 'Latest'].map(h => clc.underline(h)),
               ...reports
-                .map(([name, report]) =>
-                !report
-                  ? [name, 'custom', 'custom', 'custom']
-                  : [name, report.current, report.wanted, report.latest]
-              )
+                .map(([name, report]) => {
+                  return !report
+                    ? [name, 'custom', 'custom', 'custom']
+                    : [name, report.current, clc.green(report.wanted), clc.magenta(report.latest)]
+                })
             ],
-            { align: ['l', 'r', 'r', 'r'] }
+            {
+              align: ['l', 'r', 'r', 'r'],
+              stringLength: clc.getStrippedLength
+            }
           )
         );
       }
@@ -79,5 +85,3 @@ function fetch(url) {
     });
   });
 }
-
-
