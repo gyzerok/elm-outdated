@@ -1,11 +1,15 @@
 port module Main exposing (..)
 
-import Platform
-import Json.Decode as Decode
 import Dict
+import Elm.Package
+import Elm.Project
+import Elm.Version
+import Json.Decode as Decode
+import Platform
 
 
----- MODEL ----
+
+---- MODEL
 
 
 type alias Model =
@@ -13,20 +17,7 @@ type alias Model =
 
 
 type alias Registry =
-    Dict.Dict String (List Version)
-
-
-type alias Package =
-    { name : String
-    , version : Version
-    }
-
-
-type alias Version =
-    { major : String
-    , minor : String
-    , patch : String
-    }
+    Dict.Dict String (List Elm.Version.Version)
 
 
 type alias Report =
@@ -43,142 +34,91 @@ init flags =
             ( (), sendError e )
 
         Ok ( deps, registry ) ->
-            let
-                reports =
-                    deps
-                        |> List.foldl
-                            (\dep ->
-                                let
-                                    maybeVersions =
-                                        Dict.get dep.name registry
-
-                                    report =
-                                        Maybe.map3 Report
-                                            (Just dep.version |> Maybe.map versionToString)
-                                            (maybeVersions |> Maybe.andThen (wantedVersion dep.version) |> Maybe.map versionToString)
-                                            (maybeVersions |> Maybe.andThen List.head |> Maybe.map versionToString)
-                                in
-                                    Dict.insert dep.name report
-                            )
-                            Dict.empty
-                        |> Dict.filter
-                            (\name maybeReport ->
-                                case maybeReport of
-                                    Nothing ->
-                                        True
-
-                                    Just report ->
-                                        report.current /= report.latest
-                            )
-            in
-                ( (), sendReports <| Dict.toList reports )
+            ( (), sendReports <| collectReports deps registry )
 
 
-decodeFlags : Decode.Value -> Result String ( List Package, Registry )
+decodeFlags : Decode.Value -> Result String ( Elm.Project.Deps Elm.Version.Version, Registry )
 decodeFlags flags =
     let
-        rangeDecoder =
-            Decode.string
-                |> Decode.andThen
-                    (\str ->
-                        case List.head <| String.split " " str of
-                            Nothing ->
-                                Decode.fail "Incorrent dependency range format"
-
-                            Just versionStr ->
-                                case versionFromString versionStr of
-                                    Nothing ->
-                                        Decode.fail "Incorrect version format"
-
-                                    Just version ->
-                                        Decode.succeed version
-                    )
-
-        depsDecoder =
-            Decode.keyValuePairs rangeDecoder
-                |> Decode.at [ "dependencies" ]
-                |> Decode.map (List.map (uncurry Package))
-
         decoder =
-            Decode.map2 (,)
-                (Decode.field "elmPackageJson" depsDecoder)
-                (Decode.field "registry" registryDecoder)
+            Decode.map2 (\a b -> ( a, b ))
+                (Decode.field "elmPackageJson" Elm.Project.decoder)
+                (Decode.field "registry" <| Decode.dict (Decode.list Elm.Version.decoder))
     in
-        case Decode.decodeValue decoder flags of
-            Err _ ->
-                Err "Your elm-package.json is corrupted."
+    case Decode.decodeValue decoder flags of
+        Err e ->
+            Err "Your elm.json is corrupted"
 
-            Ok decoded ->
-                Ok decoded
+        Ok ( Elm.Project.Package _, _ ) ->
+            Err "TODO: packages not supported"
 
-
-versionFromString : String -> Maybe Version
-versionFromString str =
-    case String.split "." str of
-        major :: minor :: patch :: [] ->
-            Just <| Version major minor patch
-
-        _ ->
-            Nothing
+        Ok ( Elm.Project.Application { deps, testDeps }, registry ) ->
+            Ok ( deps ++ testDeps, registry )
 
 
-versionToString : Version -> String
-versionToString { major, minor, patch } =
-    major ++ "." ++ minor ++ "." ++ patch
-
-
-versionDecoder : Decode.Decoder Version
-versionDecoder =
-    Decode.string
-        |> Decode.andThen
-            (\str ->
-                case versionFromString str of
-                    Nothing ->
-                        Decode.fail "Failed to decode version"
-
-                    Just version ->
-                        Decode.succeed version
+collectReports : Elm.Project.Deps Elm.Version.Version -> Registry -> List ( String, Report )
+collectReports deps registry =
+    deps
+        |> List.foldl
+            (\( name, version ) ->
+                let
+                    availableVersions =
+                        registry
+                            |> Dict.get (Elm.Package.toString name)
+                            |> Maybe.withDefault [ version ]
+                in
+                Dict.insert (Elm.Package.toString name)
+                    { current = Elm.Version.toString version
+                    , wanted =
+                        availableVersions
+                            |> wantedVersion version
+                            |> Elm.Version.toString
+                    , latest =
+                        availableVersions
+                            |> List.reverse
+                            |> List.head
+                            |> Maybe.withDefault version
+                            |> Elm.Version.toString
+                    }
             )
+            Dict.empty
+        |> Dict.toList
 
 
-registryDecoder : Decode.Decoder Registry
-registryDecoder =
-    Decode.map Dict.fromList <|
-        Decode.list <|
-            Decode.map2 (,)
-                (Decode.field "name" Decode.string)
-                (Decode.field "versions" <| Decode.list versionDecoder)
-
-
-wantedVersion : Version -> List Version -> Maybe Version
+wantedVersion : Elm.Version.Version -> List Elm.Version.Version -> Elm.Version.Version
 wantedVersion version versions =
     let
-        safeVersions =
-            versions
-                |> List.filter (\{ major } -> major == version.major)
+        ( major, _, _ ) =
+            Elm.Version.toTuple version
     in
-        case safeVersions of
-            [] ->
-                Nothing
+    versions
+        |> List.filter
+            (\checkedVersion ->
+                let
+                    ( checkedMajor, _, _ ) =
+                        Elm.Version.toTuple checkedVersion
+                in
+                major == checkedMajor
+            )
+        |> List.reverse
+        |> List.head
+        |> Maybe.withDefault version
 
-            versions ->
-                List.head versions
 
 
-
----- PROGRAM ----
+---- PROGRAM
 
 
 main : Program Decode.Value Model msg
 main =
-    Platform.programWithFlags
+    Platform.worker
         { init = init
         , update = \msg model -> ( model, Cmd.none )
         , subscriptions = always Sub.none
         }
 
 
-port sendReports : List ( String, Maybe Report ) -> Cmd msg
+port sendReports : List ( String, Report ) -> Cmd msg
 
 
 port sendError : String -> Cmd msg

@@ -20,6 +20,8 @@
   "license": "BSD-3-Clause",
   "dependencies": {
     "cli-color": "^1.2.0",
+    "elm-format": "^0.8.0-alpha-elm019rc1-rc1",
+    "elm-upgrade": "^0.19.0-rc4",
     "text-table": "^0.2.0"
   },
   "devDependencies": {
