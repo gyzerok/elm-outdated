@@ -8,6 +8,7 @@
     "elm-outdated": "bin/elm-outdated"
   },
   "scripts": {
+    "prepublish": "npm run build",
     "build": "npx elm-make Main.elm --output=elm.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
