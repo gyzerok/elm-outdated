@@ -1,6 +1,6 @@
 {
   "name": "elm-outdated",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Keep your Elm dependencies up-to-date",
   "repository": "gyzerok/elm-outdated",
   "main": "index.js",
