@@ -1,5 +1,5 @@
 const fs = require('fs');
-const http = require('http');
+const http = require('https');
 const table = require('text-table');
 const clc = require('cli-color');
 
@@ -16,7 +16,7 @@ catch (e) {
   process.exit(1);
 }
 
-fetch("http://package.elm-lang.org/all-packages")
+fetch("https://package.elm-lang.org/all-packages")
   .then(data => {
     let parsedJson;
 
