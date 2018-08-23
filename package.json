@@ -3,13 +3,13 @@
   "version": "1.0.8",
   "description": "Keep your Elm dependencies up-to-date",
   "repository": "gyzerok/elm-outdated",
-  "main": "index.js",
+  "main": "src/index.js",
   "bin": {
     "elm-outdated": "bin/elm-outdated"
   },
   "scripts": {
     "prepublish": "npm run build",
-    "build": "npx elm-make Main.elm --output=elm.js",
+    "build": "npx elm make src/Main.elm --output=src/elm.js --optimize && npx elm make src/Old.elm --output=src/old.js --optimize",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -24,6 +24,6 @@
     "text-table": "^0.2.0"
   },
   "devDependencies": {
-    "elm": "^0.18.0"
+    "elm": "^0.19.0-bugfix2"
   }
 }
