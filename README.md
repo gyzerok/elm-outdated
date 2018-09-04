@@ -10,7 +10,7 @@ npm i -g elm-outdated
 
 ### Usage
 
-Just run `elm-outdated` in your project directory where `elm-package.json` is located.
+Just run `elm-outdated` in your project directory where `elm.json` or `elm-package.json` is located.
 
 ### Example
 
