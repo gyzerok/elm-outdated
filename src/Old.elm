@@ -1,8 +1,8 @@
-port module Main exposing (..)
+port module Old exposing (..)
 
-import Platform
-import Json.Decode as Decode
 import Dict
+import Json.Decode as Decode
+import Platform
 
 
 ---- MODEL ----
@@ -58,7 +58,7 @@ init flags =
                                             (maybeVersions |> Maybe.andThen (wantedVersion dep.version) |> Maybe.map versionToString)
                                             (maybeVersions |> Maybe.andThen List.head |> Maybe.map versionToString)
                                 in
-                                    Dict.insert dep.name report
+                                Dict.insert dep.name report
                             )
                             Dict.empty
                         |> Dict.filter
@@ -71,7 +71,7 @@ init flags =
                                         report.current /= report.latest
                             )
             in
-                ( (), sendReports <| Dict.toList reports )
+            ( (), sendReports <| Dict.toList reports )
 
 
 decodeFlags : Decode.Value -> Result String ( List Package, Registry )
@@ -100,16 +100,16 @@ decodeFlags flags =
                 |> Decode.map (List.map (uncurry Package))
 
         decoder =
-            Decode.map2 (,)
+            Decode.map2 Tuple.pair
                 (Decode.field "elmPackageJson" depsDecoder)
                 (Decode.field "registry" registryDecoder)
     in
-        case Decode.decodeValue decoder flags of
-            Err _ ->
-                Err "Your elm-package.json is corrupted."
+    case Decode.decodeValue decoder flags of
+        Err _ ->
+            Err "Your elm-package.json is corrupted."
 
-            Ok decoded ->
-                Ok decoded
+        Ok decoded ->
+            Ok decoded
 
 
 versionFromString : String -> Maybe Version
@@ -145,7 +145,7 @@ registryDecoder : Decode.Decoder Registry
 registryDecoder =
     Decode.map Dict.fromList <|
         Decode.list <|
-            Decode.map2 (,)
+            Decode.map2 Tuple.pair
                 (Decode.field "name" Decode.string)
                 (Decode.field "versions" <| Decode.list versionDecoder)
 
@@ -157,12 +157,17 @@ wantedVersion version versions =
             versions
                 |> List.filter (\{ major } -> major == version.major)
     in
-        case safeVersions of
-            [] ->
-                Nothing
+    case safeVersions of
+        [] ->
+            Nothing
 
-            versions ->
-                List.head versions
+        nonEmptyVersions ->
+            List.head nonEmptyVersions
+
+
+uncurry : (a -> b -> c) -> ( a, b ) -> c
+uncurry f ( a, b ) =
+    f a b
 
 
 
@@ -171,7 +176,7 @@ wantedVersion version versions =
 
 main : Program Decode.Value Model msg
 main =
-    Platform.programWithFlags
+    Platform.worker
         { init = init
         , update = \msg model -> ( model, Cmd.none )
         , subscriptions = always Sub.none
