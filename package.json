@@ -20,10 +20,10 @@
   "author": "Fedor Nezhivoi",
   "license": "BSD-3-Clause",
   "dependencies": {
-    "cli-color": "^1.2.0",
+    "cli-color": "^1.4.0",
     "text-table": "^0.2.0"
   },
   "devDependencies": {
-    "elm": "^0.19.0-bugfix2"
+    "elm": "^0.19.1-3"
   }
 }
