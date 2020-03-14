@@ -27,7 +27,7 @@ if (!elmJson && !elmPackageJson) {
   );
   process.exit(1);
 } else if (elmJson) {
-  fetch("https://package.elm-lang.org/all-packages?elm-package-version=0.19")
+  fetch("https://package.elm-lang.org/all-packages")
     .then(data => {
       let parsedJson;
 
